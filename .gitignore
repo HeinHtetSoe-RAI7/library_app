@@ -1,0 +1,71 @@
+# Backend (FastAPI)
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# FastAPI specific
+instance/
+.pytest_cache/
+coverage.xml
+nosetests.xml
+*.cover
+*.log
+
+# Docker specific
+*.log
+*.pid
+*.sock
+docker-compose.override.yml
+
+# Frontend (Next.js)
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Next.js build output
+.next/
+out/
+
+# Next.js static assets cache
+.cache/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker specific
+docker-compose.override.yml
+
+# Logs
+logs/
+*.log
+
+# IDEs and Editors
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# JetBrains
+*.iml
+
+# Other global ignores
+*.swp
+
+# Next.js configuration files
+eslint.config.mjs
+jsconfig.json
+next.config.mjs

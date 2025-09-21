@@ -1,0 +1,60 @@
+services:
+  nextjs:
+    build:
+      context: ./nextjs
+      args:
+        - NEXT_PUBLIC_API_URL=http://192.168.1.96:8888
+    environment:
+      - NEXT_PUBLIC_API_URL=http://192.168.1.96:8888
+    container_name: nextjs
+    image: library_nextjs_image
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./nextjs:/src
+      - /src/node_modules
+    working_dir: /src
+    command: npm run dev
+    # command: npm run start -- -H 0.0.0.0 -p 3000 # build
+    depends_on:
+      - fastapi
+      - postgresql
+
+  postgresql:
+    image: postgres:13-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_USER: abcd
+      POSTGRES_PASSWORD: abcd
+      POSTGRES_DB: library
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  fastapi:
+    build:
+      context: ./fastapi
+    container_name: api
+    image: library_fastapi_image
+    environment:
+      POSTGRES_USER: abcd
+      POSTGRES_PASSWORD: abcd
+      POSTGRES_DB: library
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: 5432
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./fastapi:/src
+      - /home/acer/resources/books:/books:rw
+      - /home/acer/resources/images:/images
+    command: uvicorn app:app --host 0.0.0.0 --port 8888 --log-level info --reload
+    # command: uvicorn app:app --host 0.0.0.0 --port 8888 --log-level info --workers 2
+    depends_on:
+      - postgresql
+
+volumes:
+  postgres_data:
+  
