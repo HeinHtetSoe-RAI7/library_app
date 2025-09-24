@@ -1,5 +1,5 @@
 // detail/[id]/BookSummary.js
-import { Typography, Divider } from "@mui/material";
+import { Typography, Divider, TextField } from "@mui/material";
 
 export default function BookSummary({ book, summary }) {
   return (

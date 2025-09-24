@@ -36,3 +36,68 @@ export async function updateBook(book, formData) {
 
   return res.data;
 }
+
+/**
+ * Upsert Note for each book
+ */
+export async function upsertNote(bookId, note) {
+  if (!bookId) throw new Error("Book ID is required");
+
+  const payload = {
+    book_id: bookId,
+    note: note,
+  };
+
+  try {
+    const res = await api.post("/notes", payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error upserting note:", err);
+    throw err;
+  }
+}
+
+// // Handle favourite button click
+// const handleFavouriteClick = async () => {
+//   setFavLoading(true);
+//   try {
+//     if (!favourite) {
+//       await api.post("/add_favourite", { book_id: book.id });
+//       setFavourite(true);
+//     } else {
+//       await api.delete(`/remove_favourite/${book.id}`);
+//       setFavourite(false);
+//     }
+//   } catch (error) {
+//     alert(
+//       "Favourite failed: " + (error.response?.data?.detail || error.message)
+//     );
+//   } finally {
+//     setFavLoading(false);
+//   }
+// };
+
+// const handleEditSubmit = async (formData) => {
+//   const payload = {
+//     book_id: book.id,
+//     book_link: book.book_link,
+//     title: formData.title,
+//     author: formData.author,
+//     year: formData.year ? Number(formData.year) : undefined,
+//     image_path: formData.image_path,
+//   };
+//   try {
+//     const res = await api.post("/update", payload, {
+//       headers: { "Content-Type": "application/json" },
+//     });
+//     alert("Book updated successfully!");
+//     setCurrentBook((prev) => ({ ...prev, ...formData }));
+//     setEditOpen(false);
+//   } catch (error) {
+//     alert(
+//       "Update failed: " + (error.response?.data?.detail || error.message)
+//     );
+//   }
+// };

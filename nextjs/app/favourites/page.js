@@ -44,6 +44,10 @@ function FavouriteBookList() {
     }
   }, []);
 
+  if (error) {
+    return <ErrorDialog errorMessage={error}></ErrorDialog>;
+  }
+
   return (
     <Box
       sx={{
@@ -59,7 +63,6 @@ function FavouriteBookList() {
         py: "1rem",
       }}
     >
-      {error && <ErrorDialog errorMessage={error}></ErrorDialog>}
       <Box sx={{ mb: "1rem" }}>
         <BookCardList
           section={["Favourites", "Remove all"]}

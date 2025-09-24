@@ -7,6 +7,7 @@ from routes.books import router as books_router
 from routes.users import router as users_router
 from routes.recents import router as recents_router
 from routes.favourites import router as favourites_router
+from routes.notes import router as notes_router
 
 app = FastAPI()
 
@@ -28,6 +29,7 @@ app.include_router(books_router)
 app.include_router(users_router)
 app.include_router(recents_router)
 app.include_router(favourites_router)
+app.include_router(notes_router)
 
 
 @app.on_event("startup")

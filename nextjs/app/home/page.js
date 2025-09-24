@@ -117,6 +117,10 @@ export default function Home() {
     }
   }, []);
 
+  if (error) {
+    return <ErrorDialog errorMessage={error}></ErrorDialog>;
+  }
+
   return (
     <Box
       sx={{
@@ -140,7 +144,6 @@ export default function Home() {
         setError={setSnackbarMessage}
         isSuccess={true}
       ></ErrorSnackbar>
-      {error && <ErrorDialog errorMessage={error}></ErrorDialog>}
       <Box
         sx={{
           display: "flex",

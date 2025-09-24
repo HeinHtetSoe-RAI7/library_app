@@ -4,7 +4,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 
 import api from "@/lib/axios";
-import axios from "axios";
 
 import { Box, Collapse, Typography, Grow } from "@mui/material";
 import BookCardList from "@/components/BookCardList/BookCardList";
@@ -12,16 +11,18 @@ import EditBookForm from "@/components/EditBookForm";
 import BookImage from "./BookImage";
 import BookActions from "./BookActions";
 import BookSummary from "./BookSummary";
+import EditNoteForm from "@/components/EditNoteForm";
 
 export default function BookDetail({ book }) {
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}`;
+
   const [currentBook, setCurrentBook] = useState(book);
   const [books, setBooks] = useState([]);
   const [authorLoading, setAuthorLoading] = useState(true);
   const [authorError, setAuthorError] = useState(null);
   const [favourite, setFavourite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
-  const [summary, setSummary] = useState(null);
+  const [summary, setSummary] = useState("");
   const [editOpen, setEditOpen] = useState(false);
 
   // Check favourite status
@@ -63,33 +64,55 @@ export default function BookDetail({ book }) {
     return books.filter((b) => b.id !== book.id);
   }, [books, book.id]);
 
+  // useEffect(() => {
+  //   async function fetchSummary() {
+  //     try {
+  //       const query = `intitle:${book.title
+  //         .toLowerCase()
+  //         .split(" ")
+  //         .join("+")}`;
+  //       const res = await axios.get(
+  //         `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`
+  //       );
+
+  //       const firstBook = res.data.items?.[0];
+  //       const description =
+  //         firstBook?.volumeInfo?.description ||
+  //         firstBook?.searchInfo?.textSnippet ||
+  //         "No summary available";
+
+  //       setSummary(description);
+  //     } catch (err) {
+  //       setSummary("Error fetching summary");
+  //     }
+  //   }
+
+  //   if (book.title) {
+  //     fetchSummary();
+  //   }
+  // }, [book.title]);
+
   useEffect(() => {
-    async function fetchSummary() {
+    async function fetchNote() {
+      if (!book?.id) return;
+
+      const NOTE_PLACEHOLDER = "No note available";
+
       try {
-        const query = `intitle:${book.title
-          .toLowerCase()
-          .split(" ")
-          .join("+")}`;
-        const res = await axios.get(
-          `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`
-        );
-
-        const firstBook = res.data.items?.[0];
-        const description =
-          firstBook?.volumeInfo?.description ||
-          firstBook?.searchInfo?.textSnippet ||
-          "No summary available";
-
-        setSummary(description);
+        const res = await api.get(`/notes/${book.id}`);
+        setSummary(res.data.note ?? "");
       } catch (err) {
-        setSummary("Error fetching summary");
+        if (err.response?.status === 404) {
+          setSummary(NOTE_PLACEHOLDER);
+        } else {
+          setSummary(NOTE_PLACEHOLDER);
+          console.error("Error fetching note:", err);
+        }
       }
     }
 
-    if (book.title) {
-      fetchSummary();
-    }
-  }, [book.title]);
+    fetchNote();
+  }, [book?.id]);
 
   // 🔹 Lazy load toggleFavourite only when needed
   const handleFavouriteClick = useCallback(async () => {
@@ -99,9 +122,7 @@ export default function BookDetail({ book }) {
       const newStatus = await toggleFavourite(book.id, favourite);
       setFavourite(newStatus);
     } catch (error) {
-      alert(
-        "Favourite failed: " + (error.response?.data?.detail || error.message)
-      );
+      alert(error.response?.data?.detail || error.message);
     } finally {
       setFavLoading(false);
     }
@@ -125,48 +146,30 @@ export default function BookDetail({ book }) {
     [book]
   );
 
-  // // Handle favourite button click
-  // const handleFavouriteClick = async () => {
-  //   setFavLoading(true);
-  //   try {
-  //     if (!favourite) {
-  //       await api.post("/add_favourite", { book_id: book.id });
-  //       setFavourite(true);
-  //     } else {
-  //       await api.delete(`/remove_favourite/${book.id}`);
-  //       setFavourite(false);
-  //     }
-  //   } catch (error) {
-  //     alert(
-  //       "Favourite failed: " + (error.response?.data?.detail || error.message)
-  //     );
-  //   } finally {
-  //     setFavLoading(false);
-  //   }
-  // };
-
-  // const handleEditSubmit = async (formData) => {
-  //   const payload = {
-  //     book_id: book.id,
-  //     book_link: book.book_link,
-  //     title: formData.title,
-  //     author: formData.author,
-  //     year: formData.year ? Number(formData.year) : undefined,
-  //     image_path: formData.image_path,
-  //   };
-  //   try {
-  //     const res = await api.post("/update", payload, {
-  //       headers: { "Content-Type": "application/json" },
-  //     });
-  //     alert("Book updated successfully!");
-  //     setCurrentBook((prev) => ({ ...prev, ...formData }));
-  //     setEditOpen(false);
-  //   } catch (error) {
-  //     alert(
-  //       "Update failed: " + (error.response?.data?.detail || error.message)
-  //     );
-  //   }
-  // };
+  // 🔹 Lazy load upsertNote only when editing note
+  const handleNoteEdit = useCallback(
+    async (noteText) => {
+      try {
+        if (!noteText.trim()) {
+          // If note is empty or only spaces, delete it
+          await api.delete(`/notes/${currentBook.id}`);
+          setSummary(""); // clear local state
+          alert("Note deleted successfully!");
+        } else {
+          // Otherwise upsert
+          const { upsertNote } = await import("@/lib/detailActions");
+          const savedNote = await upsertNote(currentBook.id, noteText);
+          setSummary(savedNote.note); // update local state
+          alert("Note saved successfully!");
+        }
+        setEditOpen(false); // close dialog
+      } catch (err) {
+        console.error("Error updating/deleting note:", err);
+        alert("Failed to update or delete note.");
+      }
+    },
+    [currentBook.id]
+  );
 
   return (
     <Box
@@ -241,7 +244,7 @@ export default function BookDetail({ book }) {
         }}
       >
         {/* Title, Author, Summary */}
-        <Collapse in={Boolean(summary)} timeout={1500}>
+        <Collapse in={summary != ""} timeout={1500}>
           <Box>
             <BookSummary book={currentBook} summary={summary} />
           </Box>
@@ -260,11 +263,18 @@ export default function BookDetail({ book }) {
       </Box>
 
       {/* Edit Dialog */}
-      <EditBookForm
+      {/* <EditBookForm
         book={currentBook}
         open={editOpen}
         onClose={() => setEditOpen(false)}
         onSubmit={handleEditSubmit}
+      /> */}
+
+      <EditNoteForm
+        note={summary ?? ""}
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        onSubmit={handleNoteEdit}
       />
     </Box>
   );

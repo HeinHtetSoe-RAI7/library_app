@@ -97,14 +97,25 @@ async def _create_favourites_table() -> None:
     logger.info("Favourites table created (or already exists.)")
 
 
+# async def _create_notes_table() -> None:
+#     query = """
+#     CREATE TABLE IF NOT EXISTS notes (
+#         user_id INT REFERENCES users(id) ON DELETE CASCADE,
+#         book_id INT REFERENCES books(id) ON DELETE CASCADE,
+#         note TEXT,
+#         PRIMARY KEY(user_id, book_id)
+#     )
+#     """
+#     await database.execute(query=query)
+#     logger.info("Notes table created (or already exists.)")
+
+
 async def _create_notes_table() -> None:
     query = """
     CREATE TABLE IF NOT EXISTS notes (
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        book_id INT REFERENCES books(id) ON DELETE CASCADE,
-        note TEXT,
-        PRIMARY KEY(user_id, book_id)
-    )
+    book_id INT PRIMARY KEY,
+    note TEXT
+);
     """
     await database.execute(query=query)
     logger.info("Notes table created (or already exists.)")
