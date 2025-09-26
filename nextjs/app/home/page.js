@@ -165,6 +165,7 @@ export default function Home() {
         />
       )}
 
+      {/* My books list */}
       <BookCardList
         section={["My Books", scanLoading ? "Scanning..." : "Scan books"]}
         book_list={books}

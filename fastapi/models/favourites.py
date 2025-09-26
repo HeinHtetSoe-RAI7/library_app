@@ -14,6 +14,11 @@ class FavouriteBookListItem(BaseModel):
 
 
 # Response Models
+class FavouriteResponse(BaseModel):
+    message: str
+    book_id: Optional[int] = None
+
+
 class FavouriteBookListResponse(BaseModel):
     favourite_books: List[FavouriteBookListItem]
 

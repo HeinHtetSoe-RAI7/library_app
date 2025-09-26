@@ -1,9 +1,7 @@
 import api from "./axios";
 
 export const scanBooks = async (folder) => {
-  const url = folder
-    ? `/scan_books?folder=${encodeURIComponent(folder)}`
-    : "/scan_books";
+  const url = folder ? `/scan?folder=${encodeURIComponent(folder)}` : "/scan";
   const response = await api.get(url);
   return response.data.message;
 };
@@ -24,8 +22,8 @@ export const clearFavourites = async () => {
   );
   if (!confirmed) return null;
 
-  await api.delete("/remove_all_favourites");
-  return true;
+  const response = await api.delete("/remove_all_favourites");
+  return response.data.message;
 };
 
 // // Function to scan books

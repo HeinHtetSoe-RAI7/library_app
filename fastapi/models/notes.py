@@ -11,3 +11,8 @@ class NoteCreate(BaseModel):
 class NoteOut(BaseModel):
     book_id: int
     note: Optional[str] = None
+
+
+class NoteResponse(BaseModel):
+    message: str
+    book_id: int

@@ -50,13 +50,6 @@ async def signin_route(user: UserLogin):
         "username": user_data["username"],
     }
 
-    # if user_data and verify_password(user.password, user_data["password"]):
-    #     access_token = create_access_token(data={"sub": str(user_data["id"])}, remember_me=user.remember_me)
-    #     logger.info(f"Login successful for {user_data['id']}")
-    #     return {"access_token": access_token, "token_type": "bearer"}
-    # logger.warning("Invalid credentials")
-    # raise HTTPException(status_code=401, detail="Invalid credentials")
-
 
 # Delete user endpoint
 @router.delete("/delete_account", response_model=UserOut)

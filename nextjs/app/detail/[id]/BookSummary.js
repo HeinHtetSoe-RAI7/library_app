@@ -1,7 +1,7 @@
 // detail/[id]/BookSummary.js
-import { Typography, Divider, TextField } from "@mui/material";
+import { Button, Typography, Divider, Collapse } from "@mui/material";
 
-export default function BookSummary({ book, summary }) {
+export default function BookSummary({ book, summary, onEditClicked }) {
   return (
     <>
       <Typography variant="h4" gutterBottom>
@@ -13,11 +13,14 @@ export default function BookSummary({ book, summary }) {
       </Typography>
       <Divider variant="fullWidth" sx={{ my: 2 }} />
 
-      <Typography variant="body1" mb={2}>
-        {summary}
-        {/* သီဟိုဠ်မှဉာဏ်ကြီးရှင်သည်အာယုဝဍ္ဎနဆေးညွှန်းစာကို
+      <Collapse in={summary != ""} timeout="auto">
+        <Typography variant="body1" mb={2}>
+          {summary}
+          {/* သီဟိုဠ်မှဉာဏ်ကြီးရှင်သည်အာယုဝဍ္ဎနဆေးညွှန်းစာကို
       //         ဇလွန်ဈေးဘေးဗာဒံပင်ထက်အဓိဋ္ဌာန်လျက်ဂဃနဏဖတ်ခဲ့သည်။ */}
-      </Typography>
+        </Typography>
+      </Collapse>
+      <Button onClick={onEditClicked}>Edit</Button>
     </>
   );
 }

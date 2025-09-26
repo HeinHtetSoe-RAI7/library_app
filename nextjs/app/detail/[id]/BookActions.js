@@ -1,6 +1,4 @@
 // BookActions.js
-import api from "@/lib/axios";
-
 import {
   Box,
   Button,
@@ -12,15 +10,6 @@ import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlin
 import FavoriteOutlinedIcon from "@mui/icons-material/FavoriteOutlined";
 import EditNoteOutlinedIcon from "@mui/icons-material/EditNoteOutlined";
 
-async function addToRecent(bookId) {
-  try {
-    await api.post("/add_recent", { book_id: bookId });
-  } catch (err) {
-    // Optionally handle error
-    console.error("Failed to add to recent", err);
-  }
-}
-
 export default function BookActions({
   book,
   apiUrl,
@@ -30,8 +19,18 @@ export default function BookActions({
   onEditClick,
 }) {
   const handleReadClick = async () => {
-    await addToRecent(book.id);
-    window.open(`${apiUrl}${book.book_link}`, "_blank", "noopener,noreferrer");
+    try {
+      const { addToRecent } = await import("@/lib/detailActions");
+      await addToRecent(book.id);
+
+      window.open(
+        `${apiUrl}${book.book_link}`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    } catch (err) {
+      console.error("Error handling read click:", err);
+    }
   };
 
   return (

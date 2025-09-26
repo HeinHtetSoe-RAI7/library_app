@@ -99,9 +99,10 @@ async def delete_book(book_id: int) -> Optional[dict[str, Any]]:
 
 
 # Truncate the books table
-async def truncate_books_table() -> None:
+async def truncate_books_table() -> bool:
     query = "TRUNCATE TABLE books RESTART IDENTITY CASCADE"
     await database.execute(query=query)
+    return True
 
 
 # Check if book exists by link

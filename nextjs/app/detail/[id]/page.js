@@ -3,9 +3,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import BookDetail from "./DetailPage";
+
 import api from "@/lib/axios";
+
 import { CircularProgress, Typography, Box } from "@mui/material";
+import BookDetail from "./DetailPage";
 
 export default function BookDetailPage() {
   const params = useParams();

@@ -2,14 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import api from "@/lib/axios";
+
 import { Box } from "@mui/material";
+
 import BookCardList from "@/components/BookCardList/BookCardList";
 import ErrorDialog from "@/components/ErrorDialog";
+import ErrorSnackbar from "@/components/ErrorSnackbar";
 
 function FavouriteBookList() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   // Fetch favourite books on mount
   useEffect(() => {
@@ -36,8 +40,11 @@ function FavouriteBookList() {
   const handleClearFavourites = useCallback(async () => {
     try {
       const { clearFavourites } = await import("@/lib/bookActions");
-      const result = await clearFavourites();
-      if (result) setBooks([]);
+      const message = await clearFavourites();
+      if (message) {
+        setBooks([]);
+        setSnackbarMessage(message);
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to clear favourite books.");
@@ -56,13 +63,18 @@ function FavouriteBookList() {
         px: {
           xs: "1rem", // mobile
           sm: "2rem", // tablet
-          md: "2rem", // laptop
+          md: "3rem", // laptop
           lg: "4rem", // large desktop
           xl: "5rem", // extra wide screens
         },
         py: "1rem",
       }}
     >
+      <ErrorSnackbar
+        error={snackbarMessage}
+        setError={setSnackbarMessage}
+        isSuccess={true}
+      ></ErrorSnackbar>
       <Box sx={{ mb: "1rem" }}>
         <BookCardList
           section={["Favourites", "Remove all"]}

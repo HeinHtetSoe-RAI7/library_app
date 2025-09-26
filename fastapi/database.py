@@ -113,7 +113,7 @@ async def _create_favourites_table() -> None:
 async def _create_notes_table() -> None:
     query = """
     CREATE TABLE IF NOT EXISTS notes (
-    book_id INT PRIMARY KEY,
+    book_id INT PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,
     note TEXT
 );
     """

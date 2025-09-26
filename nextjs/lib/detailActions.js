@@ -58,6 +58,17 @@ export async function upsertNote(bookId, note) {
     throw err;
   }
 }
+/**
+ * Add to recent on Read button clicked
+ */
+export async function addToRecent(bookId) {
+  try {
+    await api.post("/add_recent", { book_id: bookId });
+  } catch (err) {
+    console.error("Failed to add to recent", err);
+    throw err;
+  }
+}
 
 // // Handle favourite button click
 // const handleFavouriteClick = async () => {

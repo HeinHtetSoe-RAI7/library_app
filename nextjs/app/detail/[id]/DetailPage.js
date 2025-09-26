@@ -1,11 +1,17 @@
 // detail/[id]/DetailPage.js
 "use client";
 
-import React, { useEffect, useState, useMemo, useCallback } from "react";
-
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import api from "@/lib/axios";
+import axios from "axios";
 
-import { Box, Collapse, Typography, Grow } from "@mui/material";
+import { Box, Typography, Grow } from "@mui/material";
 import BookCardList from "@/components/BookCardList/BookCardList";
 import EditBookForm from "@/components/EditBookForm";
 import BookImage from "./BookImage";
@@ -13,108 +19,107 @@ import BookActions from "./BookActions";
 import BookSummary from "./BookSummary";
 import EditNoteForm from "@/components/EditNoteForm";
 
+const NOTE_PLACEHOLDER = "No note available";
+
 export default function BookDetail({ book }) {
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}`;
 
   const [currentBook, setCurrentBook] = useState(book);
   const [books, setBooks] = useState([]);
-  const [authorLoading, setAuthorLoading] = useState(true);
-  const [authorError, setAuthorError] = useState(null);
   const [favourite, setFavourite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const [summary, setSummary] = useState("");
   const [editOpen, setEditOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Check favourite status
-  useEffect(() => {
-    if (!book?.id) return;
-    const checkFavourite = async () => {
-      try {
-        const response = await api.get(`/is_favourite/${book.id}`);
-        setFavourite(response.data.is_favourite);
-      } catch (err) {
-        console.error("Error checking favourite status", err);
-      }
-    };
-    checkFavourite();
-  }, [book?.id]);
-
-  // Fetch books by author
-  useEffect(() => {
-    if (!book?.author) return;
-    setAuthorLoading(true);
-    const fetchBooksByAuthor = async () => {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        const response = await api.get(
-          `/filter?author=${encodeURIComponent(book.author)}`
-        );
-        setBooks(response.data.books || []);
-      } catch (err) {
-        setAuthorError("Error fetching books by author");
-      } finally {
-        setAuthorLoading(false);
-      }
-    };
-    fetchBooksByAuthor();
-  }, [book?.author]);
-
-  // Memoize more books by author (excluding current book)
-  const moreBooksByAuthor = useMemo(() => {
-    return books.filter((b) => b.id !== book.id);
-  }, [books, book.id]);
-
-  // useEffect(() => {
-  //   async function fetchSummary() {
-  //     try {
-  //       const query = `intitle:${book.title
-  //         .toLowerCase()
-  //         .split(" ")
-  //         .join("+")}`;
-  //       const res = await axios.get(
-  //         `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`
-  //       );
-
-  //       const firstBook = res.data.items?.[0];
-  //       const description =
-  //         firstBook?.volumeInfo?.description ||
-  //         firstBook?.searchInfo?.textSnippet ||
-  //         "No summary available";
-
-  //       setSummary(description);
-  //     } catch (err) {
-  //       setSummary("Error fetching summary");
-  //     }
-  //   }
-
-  //   if (book.title) {
-  //     fetchSummary();
-  //   }
-  // }, [book.title]);
-
-  useEffect(() => {
-    async function fetchNote() {
-      if (!book?.id) return;
-
-      const NOTE_PLACEHOLDER = "No note available";
-
-      try {
-        const res = await api.get(`/notes/${book.id}`);
-        setSummary(res.data.note ?? "");
-      } catch (err) {
-        if (err.response?.status === 404) {
-          setSummary(NOTE_PLACEHOLDER);
-        } else {
-          setSummary(NOTE_PLACEHOLDER);
-          console.error("Error fetching note:", err);
-        }
-      }
+  // 🔹 Debounce helper
+  const saveNoteTimeout = useRef(null);
+  const debouncedUpsertNote = useCallback((bookId, note, delay = 3000) => {
+    if (saveNoteTimeout.current) {
+      clearTimeout(saveNoteTimeout.current);
     }
+    saveNoteTimeout.current = setTimeout(async () => {
+      try {
+        const { upsertNote } = await import("@/lib/detailActions");
+        await upsertNote(bookId, note);
+        console.log("Note saved after debounce:", note);
+      } catch (err) {
+        console.error("Failed to save note:", err);
+      }
+    }, delay);
+  }, []);
 
-    fetchNote();
-  }, [book?.id]);
+  // Combined effect for favourite, author books, and summary
+  useEffect(() => {
+    if (!book?.id || !book?.title) return;
 
-  // 🔹 Lazy load toggleFavourite only when needed
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Requests in parallel
+        const favReq = api.get(`/is_favourite/${book.id}`);
+
+        const authorReq = book.author
+          ? api.get(`/filter?author=${encodeURIComponent(book.author)}`)
+          : Promise.resolve({ data: { books: [] } });
+
+        const noteReq = api.get(`/notes/${book.id}`).catch((err) => {
+          if (err.response?.status === 404) return { data: { note: "" } };
+          throw err;
+        });
+
+        const [favRes, authorRes, noteRes] = await Promise.all([
+          favReq,
+          authorReq,
+          noteReq,
+        ]);
+
+        setFavourite(favRes.data.is_favourite);
+        setBooks(authorRes.data.books || []);
+
+        let note = noteRes.data?.note ?? "";
+        if (note.trim() !== "") {
+          setSummary(note);
+        } else {
+          // Google Books fallback
+          const query = `intitle:${book.title
+            .toLowerCase()
+            .split(" ")
+            .join("+")}`;
+
+          const googleRes = await axios.get(
+            `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`
+          );
+
+          const firstBook = googleRes.data.items?.[0];
+          const description =
+            firstBook?.volumeInfo?.description ||
+            firstBook?.searchInfo?.textSnippet ||
+            "";
+
+          setSummary(description || NOTE_PLACEHOLDER);
+
+          // Save Google summary locally if found (debounced)
+          if (description.trim() !== "") {
+            debouncedUpsertNote(book.id, description);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching book details:", err);
+        setError("Failed to fetch book details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [book?.id, book?.title, book?.author, debouncedUpsertNote]);
+
+  // Lazy load toggleFavourite only when needed
   const handleFavouriteClick = useCallback(async () => {
     setFavLoading(true);
     try {
@@ -128,7 +133,7 @@ export default function BookDetail({ book }) {
     }
   }, [book.id, favourite]);
 
-  // 🔹 Lazy load updateBook only when editing
+  // Lazy load updateBook only when editing
   const handleEditSubmit = useCallback(
     async (formData) => {
       try {
@@ -146,30 +151,31 @@ export default function BookDetail({ book }) {
     [book]
   );
 
-  // 🔹 Lazy load upsertNote only when editing note
+  // Lazy load upsertNote only when editing note (debounced)
   const handleNoteEdit = useCallback(
     async (noteText) => {
       try {
         if (!noteText.trim()) {
-          // If note is empty or only spaces, delete it
+          // Delete empty note immediately
           await api.delete(`/notes/${currentBook.id}`);
-          setSummary(""); // clear local state
-          alert("Note deleted successfully!");
+          setSummary(NOTE_PLACEHOLDER);
         } else {
-          // Otherwise upsert
-          const { upsertNote } = await import("@/lib/detailActions");
-          const savedNote = await upsertNote(currentBook.id, noteText);
-          setSummary(savedNote.note); // update local state
-          alert("Note saved successfully!");
+          // Save note with debounce
+          setSummary(noteText);
+          debouncedUpsertNote(currentBook.id, noteText);
         }
-        setEditOpen(false); // close dialog
+        setNoteOpen(false);
       } catch (err) {
-        console.error("Error updating/deleting note:", err);
-        alert("Failed to update or delete note.");
+        console.error("Error updating/deleting note: ", err);
       }
     },
-    [currentBook.id]
+    [currentBook.id, debouncedUpsertNote]
   );
+
+  // Memoize "More books by this author"
+  const moreBooksByAuthor = useMemo(() => {
+    return books.filter((b) => b.id !== book.id);
+  }, [books, book.id]);
 
   return (
     <Box
@@ -243,37 +249,43 @@ export default function BookDetail({ book }) {
           gap: 2,
         }}
       >
-        {/* Title, Author, Summary */}
-        <Collapse in={summary != ""} timeout={1500}>
-          <Box>
-            <BookSummary book={currentBook} summary={summary} />
-          </Box>
-        </Collapse>
         <Box>
-          {authorError ? (
-            <Typography color="error">{authorError}</Typography>
+          {error ? (
+            <Typography color="error">{error}</Typography>
+          ) : (
+            <BookSummary
+              book={currentBook}
+              summary={summary}
+              onEditClicked={() => setNoteOpen(true)}
+            />
+          )}
+        </Box>
+
+        <Box>
+          {error ? (
+            <Typography color="error">{error}</Typography>
           ) : (
             <BookCardList
               book_list={moreBooksByAuthor}
               section={[`More by ${currentBook.author}`, ""]}
-              loading={authorLoading}
+              loading={loading}
             />
           )}
         </Box>
       </Box>
 
-      {/* Edit Dialog */}
-      {/* <EditBookForm
+      {/* Edit Dialogs */}
+      <EditBookForm
         book={currentBook}
         open={editOpen}
         onClose={() => setEditOpen(false)}
         onSubmit={handleEditSubmit}
-      /> */}
+      />
 
       <EditNoteForm
         note={summary ?? ""}
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
+        open={noteOpen}
+        onClose={() => setNoteOpen(false)}
         onSubmit={handleNoteEdit}
       />
     </Box>

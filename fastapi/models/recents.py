@@ -8,6 +8,11 @@ class RecentBookAdd(BaseModel):
 
 
 # Responses
+class RecentBookResponse(BaseModel):
+    message: str
+    book_id: Optional[int] = None
+
+
 class RecentBookListItem(BaseModel):
     id: int
     title: Optional[str] = None

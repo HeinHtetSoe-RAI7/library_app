@@ -1,24 +1,3 @@
-// // detail/[id]/BookImage.js
-// import { CardMedia } from "@mui/material";
-
-// export default function BookImage({ apiUrl, image_path, title }) {
-//   return (
-//     <CardMedia
-//       component="img"
-//       image={
-//         image_path?.startsWith("http") ? image_path : `${apiUrl}${image_path}`
-//       }
-//       alt={title}
-//       sx={{
-//         width: "100%",
-//         height: "auto",
-//         objectFit: "cover",
-//         borderRadius: 1,
-//       }}
-//     />
-//   );
-// }
-
 // detail/[id]/BookImage.js
 import { Card, CardMedia } from "@mui/material";
 

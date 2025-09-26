@@ -37,10 +37,6 @@ class BookUpdate(BaseModel):
     book_link: str
 
 
-class BookDelete(BaseModel):
-    book_id: int
-
-
 # Response Models
 class BookListResponse(BaseModel):
     books: List[BookListItem]
@@ -52,4 +48,9 @@ class BookDetailResponse(BaseModel):
 
 class BookResponse(BaseModel):
     message: str
-    book: dict
+    book: BookOut
+
+
+class BooksResponse(BaseModel):
+    message: str
+    books: dict
