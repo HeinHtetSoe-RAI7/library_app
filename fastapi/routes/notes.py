@@ -8,7 +8,7 @@ from queries.notes import *
 from models.notes import *
 from auth.auth import get_current_user
 
-router = APIRouter(tags=["Notes"])
+router = APIRouter(tags=["Notes"], prefix="/notes")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NOTES ROUTE")
 
@@ -49,7 +49,7 @@ def sanitize_note(note: str) -> str:
 # ----------------------------
 # Routes
 # ----------------------------
-@router.post("/notes", response_model=NoteOut)
+@router.post("", response_model=NoteOut)
 @handle_route_errors("Creating or updating note")
 async def create_or_update_note_route(note: NoteCreate):
     logger.info(f"Upserting note for book {note.book_id}")
@@ -64,7 +64,7 @@ async def create_or_update_note_route(note: NoteCreate):
     return saved
 
 
-@router.get("/notes/{book_id}", response_model=NoteOut)
+@router.get("/{book_id}", response_model=NoteOut)
 @handle_route_errors("Fetching note")
 async def read_note_route(book_id: int):
     note = await get_note_by_book(book_id)
@@ -75,7 +75,7 @@ async def read_note_route(book_id: int):
     return note
 
 
-@router.delete("/notes/{book_id}", response_model=NoteResponse)
+@router.delete("/{book_id}", response_model=NoteResponse)
 @handle_route_errors("Deleting note")
 async def delete_note_route(book_id: int):
     note = await get_note_by_book(book_id)

@@ -22,8 +22,8 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all HTTP methods
     allow_headers=["*"],  # Allows all headers
 )
-app.mount("/images", StaticFiles(directory="/images"), name="images")
-app.mount("/books", StaticFiles(directory="/books"), name="books")
+app.mount("/images_static", StaticFiles(directory="/images"), name="images")
+app.mount("/books_static", StaticFiles(directory="/books"), name="books")
 
 app.include_router(books_router)
 app.include_router(users_router)

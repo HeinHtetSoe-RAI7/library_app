@@ -35,13 +35,17 @@ export default function Home() {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // delay
       if (title) {
         // Only search books when searching
-        const res = await api.get(`/search?title=${encodeURIComponent(title)}`);
+        const res = await api.get(
+          // `/books/search?title=${encodeURIComponent(title)}`
+          "/books/search",
+          { params: { title } }
+        );
         setBooks(res.data.books || []);
       } else {
         // Fetch both books & recents on initial load
         const [booksRes, recentsRes] = await Promise.allSettled([
-          api.get("/search"),
-          api.get("/recent_books"),
+          api.get("/books/search"),
+          api.get("/recents"),
         ]);
 
         const unauthorized =

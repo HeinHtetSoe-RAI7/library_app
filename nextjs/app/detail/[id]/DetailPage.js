@@ -8,16 +8,21 @@ import React, {
   useCallback,
   useRef,
 } from "react";
+import dynamic from "next/dynamic";
 import api from "@/lib/axios";
-import axios from "axios";
 
 import { Box, Typography, Grow } from "@mui/material";
 import BookCardList from "@/components/BookCardList/BookCardList";
-import EditBookForm from "@/components/EditBookForm";
 import BookImage from "./BookImage";
 import BookActions from "./BookActions";
 import BookSummary from "./BookSummary";
-import EditNoteForm from "@/components/EditNoteForm";
+
+const EditBookForm = dynamic(() => import("@/components/EditBookForm"), {
+  ssr: false,
+});
+const EditNoteForm = dynamic(() => import("@/components/EditNoteForm"), {
+  ssr: false,
+});
 
 const NOTE_PLACEHOLDER = "No note available";
 
@@ -34,7 +39,7 @@ export default function BookDetail({ book }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🔹 Debounce helper
+  // Debounce helper
   const saveNoteTimeout = useRef(null);
   const debouncedUpsertNote = useCallback((bookId, note, delay = 3000) => {
     if (saveNoteTimeout.current) {
@@ -51,73 +56,108 @@ export default function BookDetail({ book }) {
     }, delay);
   }, []);
 
-  // Combined effect for favourite, author books, and summary
-  useEffect(() => {
-    if (!book?.id || !book?.title) return;
+  const fetchFavouriteStatus = useCallback(async (bookId) => {
+    try {
+      const res = await api.get(`/favourites/${bookId}`);
+      setFavourite(res.data.is_favourite);
+    } catch (err) {
+      console.error("Failed to fetch favourite status:", err);
+    }
+  }, []);
 
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
+  const fetchAuthorBooks = useCallback(async (author, currentBookId) => {
+    if (!author) {
+      setBooks([]);
+      return;
+    }
+    try {
+      const res = await api.get(`/books/filter`, { params: { author } });
+      const filteredBooks = (res.data.books || []).filter(
+        (b) => b.id !== currentBookId
+      );
+      setBooks(filteredBooks);
+    } catch (err) {
+      console.error("Failed to fetch author books:", err);
+      setBooks([]);
+    }
+  }, []);
 
+  const fetchBookSummary = useCallback(
+    async (book) => {
       try {
-        // Requests in parallel
-        const favReq = api.get(`/is_favourite/${book.id}`);
-
-        const authorReq = book.author
-          ? api.get(`/filter?author=${encodeURIComponent(book.author)}`)
-          : Promise.resolve({ data: { books: [] } });
-
-        const noteReq = api.get(`/notes/${book.id}`).catch((err) => {
+        const noteRes = await api.get(`/notes/${book.id}`).catch((err) => {
           if (err.response?.status === 404) return { data: { note: "" } };
           throw err;
         });
-
-        const [favRes, authorRes, noteRes] = await Promise.all([
-          favReq,
-          authorReq,
-          noteReq,
-        ]);
-
-        setFavourite(favRes.data.is_favourite);
-        setBooks(authorRes.data.books || []);
 
         let note = noteRes.data?.note ?? "";
         if (note.trim() !== "") {
           setSummary(note);
         } else {
-          // Google Books fallback
+          // Query Google Books API
           const query = `intitle:${book.title
             .toLowerCase()
             .split(" ")
             .join("+")}`;
-
-          const googleRes = await axios.get(
+          const googleRes = await fetch(
             `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`
           );
 
-          const firstBook = googleRes.data.items?.[0];
+          if (!googleRes.ok) {
+            setSummary(NOTE_PLACEHOLDER);
+            return; // no upsert
+          }
+
+          const data = await googleRes.json();
+          const firstBook = data.items?.[0];
+
+          if (!firstBook) {
+            console.warn("No books found in Google API, skipping upsert");
+            setSummary(NOTE_PLACEHOLDER);
+            return; // no upsert
+          }
+
           const description =
-            firstBook?.volumeInfo?.description ||
-            firstBook?.searchInfo?.textSnippet ||
-            "";
+            firstBook.volumeInfo?.description ||
+            firstBook.searchInfo?.textSnippet ||
+            NOTE_PLACEHOLDER;
 
-          setSummary(description || NOTE_PLACEHOLDER);
+          setSummary(description);
 
-          // Save Google summary locally if found (debounced)
-          if (description.trim() !== "") {
+          if (description.trim() !== "" && description !== NOTE_PLACEHOLDER) {
             debouncedUpsertNote(book.id, description);
           }
         }
       } catch (err) {
-        console.error("Error fetching book details:", err);
+        console.error("Failed to fetch book summary:", err);
+        setSummary(NOTE_PLACEHOLDER);
+      }
+    },
+    [debouncedUpsertNote]
+  );
+
+  useEffect(() => {
+    if (!book?.id) return;
+
+    setLoading(true);
+    setError(null);
+
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          fetchFavouriteStatus(book.id),
+          fetchAuthorBooks(book.author, book.id),
+          fetchBookSummary(book),
+        ]);
+      } catch (err) {
         setError("Failed to fetch book details");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [book?.id, book?.title, book?.author, debouncedUpsertNote]);
+    loadData();
+  }, [book, fetchFavouriteStatus, fetchAuthorBooks, fetchBookSummary]);
 
   // Lazy load toggleFavourite only when needed
   const handleFavouriteClick = useCallback(async () => {
@@ -275,19 +315,23 @@ export default function BookDetail({ book }) {
       </Box>
 
       {/* Edit Dialogs */}
-      <EditBookForm
-        book={currentBook}
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        onSubmit={handleEditSubmit}
-      />
+      {editOpen && (
+        <EditBookForm
+          book={currentBook}
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          onSubmit={handleEditSubmit}
+        />
+      )}
 
-      <EditNoteForm
-        note={summary ?? ""}
-        open={noteOpen}
-        onClose={() => setNoteOpen(false)}
-        onSubmit={handleNoteEdit}
-      />
+      {noteOpen && (
+        <EditNoteForm
+          note={summary ?? ""}
+          open={noteOpen}
+          onClose={() => setNoteOpen(false)}
+          onSubmit={handleNoteEdit}
+        />
+      )}
     </Box>
   );
 }

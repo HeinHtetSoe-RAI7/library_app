@@ -44,29 +44,19 @@ export default function BookActions({
         gap: 2,
       }}
     >
-      <ButtonGroup
-        variant="contained"
-        aria-label="read and favourite"
-        fullWidth
-        disableElevation
-        sx={{
-          width: "100%",
-          "& .MuiButtonGroup-grouped": {
-            flex: "unset",
-          },
-        }}
-      >
-        <Button sx={{ flex: "0 0 80%" }} onClick={handleReadClick}>
+      {/* Read + Favourite row */}
+      <Box sx={{ display: "flex", width: "100%" }}>
+        <Button
+          variant="contained"
+          sx={{ flex: 1, mr: 1 }}
+          onClick={handleReadClick}
+        >
           Read
         </Button>
         <IconButton
-          variant="outlined"
-          sx={{ flex: "0 0 20%" }}
+          // sx={{ flex: "0 0 20%" }}
           color={favourite ? "error" : "primary"}
           onClick={onFavouriteClick}
-          aria-label={
-            favourite ? "Remove from favourites" : "Add to favourites"
-          }
           disabled={favLoading}
         >
           {favLoading ? (
@@ -77,11 +67,13 @@ export default function BookActions({
             <FavoriteBorderOutlinedIcon />
           )}
         </IconButton>
-      </ButtonGroup>
+      </Box>
+
+      {/* Edit button below, full width */}
       <Button
+        fullWidth
         variant="outlined"
         color="primary"
-        fullWidth
         startIcon={<EditNoteOutlinedIcon />}
         onClick={onEditClick}
       >

@@ -21,7 +21,7 @@ function FavouriteBookList() {
       setLoading(true);
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        const res = await api.get("/favourite_books");
+        const res = await api.get("/favourites");
         setBooks(res.data.favourite_books || []);
       } catch (err) {
         if (err.response?.status === 401) {

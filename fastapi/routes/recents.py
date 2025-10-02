@@ -6,7 +6,7 @@ from queries.recents import *
 from models.recents import *
 from auth.auth import get_current_user
 
-router = APIRouter(tags=["Recents"])
+router = APIRouter(tags=["Recents"], prefix="/recents")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("RECENTS ROUTE")
 
@@ -44,7 +44,7 @@ def handle_route_errors(action: str):
 # ----------------------------
 # Routes
 # ----------------------------
-@router.post("/add_recent", response_model=RecentBookResponse)
+@router.post("", response_model=RecentBookResponse)
 @handle_route_errors("Adding recent book")
 async def insert_recent_route(
     book: RecentBookAdd, current_user: str = Depends(get_current_user)
@@ -56,7 +56,7 @@ async def insert_recent_route(
     )
 
 
-@router.get("/recent_books", response_model=RecentBookListResponse)
+@router.get("", response_model=RecentBookListResponse)
 @handle_route_errors("Fetching recent books")
 async def get_recents_route(current_user: str = Depends(get_current_user)):
     books = await get_recent_books(int(current_user))
@@ -67,7 +67,7 @@ async def get_recents_route(current_user: str = Depends(get_current_user)):
     )
 
 
-@router.delete("/clear_all", response_model=RecentBookResponse)
+@router.delete("", response_model=RecentBookResponse)
 @handle_route_errors("Clearing recent books")
 async def clear_all_route(current_user: str = Depends(get_current_user)):
     logger.info(f"Clearing all recents for user {current_user}")

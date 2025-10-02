@@ -7,7 +7,7 @@ from queries.favourites import *
 from models.favourites import *
 from auth.auth import get_current_user
 
-router = APIRouter(tags=["Favourites"])
+router = APIRouter(tags=["Favourites"], prefix="/favourites")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("FAVOURITES ROUTE")
 
@@ -39,7 +39,7 @@ def handle_route_errors(action: str):
 # ----------------------------
 # Routes
 # ----------------------------
-@router.post("/add_favourite", response_model=FavouriteResponse)
+@router.post("", response_model=FavouriteResponse)
 @handle_route_errors("Adding favourite book")
 async def add_favourite_route(
     book: FavouriteBookAdd, current_user: str = Depends(get_current_user)
@@ -51,7 +51,7 @@ async def add_favourite_route(
     )
 
 
-@router.get("/favourite_books", response_model=FavouriteBookListResponse)
+@router.get("", response_model=FavouriteBookListResponse)
 @handle_route_errors("Fetching favourite books")
 async def get_favourite_books_route(current_user: str = Depends(get_current_user)):
     books = await get_favourite_books(int(current_user))
@@ -62,7 +62,14 @@ async def get_favourite_books_route(current_user: str = Depends(get_current_user
     )
 
 
-@router.delete("/remove_favourite/{book_id}", response_model=FavouriteResponse)
+@router.delete("", response_model=FavouriteResponse)
+@handle_route_errors("Removing all favourite books")
+async def remove_all_favourites_route(current_user: str = Depends(get_current_user)):
+    await remove_all_favourites(int(current_user))
+    return FavouriteResponse(message="All favourite books have been removed.")
+
+
+@router.delete("/{book_id}", response_model=FavouriteResponse)
 @handle_route_errors("Removing favourite book")
 async def remove_favourite_route(
     book_id: int, current_user: str = Depends(get_current_user)
@@ -73,14 +80,7 @@ async def remove_favourite_route(
     )
 
 
-@router.delete("/remove_all_favourites", response_model=FavouriteResponse)
-@handle_route_errors("Removing all favourite books")
-async def remove_all_favourites_route(current_user: str = Depends(get_current_user)):
-    await remove_all_favourites(int(current_user))
-    return FavouriteResponse(message="All favourite books have been removed.")
-
-
-@router.get("/is_favourite/{book_id}", response_model=IsFavouriteResponse)
+@router.get("/{book_id}", response_model=IsFavouriteResponse)
 @handle_route_errors("Checking if book is favourite")
 async def is_favourite_route(
     book_id: int, current_user: str = Depends(get_current_user)

@@ -10,7 +10,7 @@ from queries.books import *
 from utilities import *
 from auth.auth import get_current_user
 
-router = APIRouter(tags=["Books"])
+router = APIRouter(tags=["Books"], prefix="/books")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("BOOKS ROUTE")
 
@@ -51,7 +51,7 @@ def format_book(row) -> dict:
 # ----------------------------
 # Routes
 # ----------------------------
-@router.get("/books", response_model=BookListResponse)
+@router.get("", response_model=BookListResponse)
 @handle_route_errors("Fetching all books")
 async def show_all_books_route(current_user: str = Depends(get_current_user)):
     data = await get_all_books()
@@ -59,22 +59,8 @@ async def show_all_books_route(current_user: str = Depends(get_current_user)):
     return BookListResponse(books=[BookListItem(**book) for book in books])
 
 
-@router.get("/book/{book_id}", response_model=BookDetailResponse)
-@handle_route_errors("Fetching book details")
-async def get_book_details_route(
-    book_id: int, current_user: str = Depends(get_current_user)
-):
-    book = await get_book_by_id(book_id)
-    if not book:
-        logger.warning(f"Book with ID {book_id} not found")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
-        )
-    return BookDetailResponse(book_detail=BookOut(**book))
-
-
 @router.get("/search", response_model=BookListResponse)
-@handle_route_errors("Filtering books by title")
+@handle_route_errors("Searching books by title")
 async def filter_books_by_title_route(
     title: Optional[str] = None, current_user: str = Depends(get_current_user)
 ):
@@ -150,6 +136,32 @@ async def update_book_route(
     )
 
 
+@router.delete("/remove_all", response_model=BookResponse)
+@handle_route_errors("Deleting all books")
+async def remove_all_books_route():
+    truncated = await truncate_books_table()
+    if truncated is not None:
+        return BookResponse(message=f"Deleted {truncated} books successfully")
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Failed to delete all books",
+    )
+
+
+@router.get("/{book_id}", response_model=BookDetailResponse)
+@handle_route_errors("Fetching book details")
+async def get_book_details_route(
+    book_id: int, current_user: str = Depends(get_current_user)
+):
+    book = await get_book_by_id(book_id)
+    if not book:
+        logger.warning(f"Book with ID {book_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+        )
+    return BookDetailResponse(book_detail=BookOut(**book))
+
+
 @router.delete("/remove/{book_id}", response_model=BookResponse)
 @handle_route_errors("Deleting book")
 async def remove_book_route(
@@ -162,16 +174,4 @@ async def remove_book_route(
         )
     return BookResponse(
         message="Book deleted successfully", book=BookOut(**deleted_book)
-    )
-
-
-@router.delete("/remove_all", response_model=BookResponse)
-@handle_route_errors("Deleting all books")
-async def remove_all_books_route(current_user: str = Depends(get_current_user)):
-    truncated = await truncate_books_table()
-    if truncated is not None:
-        return BookResponse(message=f"Deleted {truncated} books successfully")
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Failed to delete all books",
     )

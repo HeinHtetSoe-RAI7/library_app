@@ -1,27 +1,3 @@
-# FROM node:20-alpine
-
-# WORKDIR /src
-
-# # Install dependencies
-# COPY package.json package-lock.json ./
-# RUN npm install --production
-# COPY . .
-
-# # Build Next.js
-# RUN npm run build
-
-# # Expose the port Next.js will run on
-# EXPOSE 3000
-
-# # Disable Next.js telemetry
-# RUN npx next telemetry disable
-
-# # Skip build step for dev
-# CMD ["npm", "run", "dev"]
-# # CMD ["npm", "run", "start", "--", "-H", "0.0.0.0", "-p","3000"]
-
-#####
-
 # Build Stage
 FROM node:20-alpine as builder
 
@@ -56,7 +32,7 @@ EXPOSE 3000
 RUN npx next telemetry disable
 
 # Command for development
-# CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev"]
 
 # Optional: use for production
-CMD ["npm", "run", "start", "--", "-H", "0.0.0.0", "-p", "3000"]
+# CMD ["npm", "run", "start", "--", "-H", "0.0.0.0", "-p", "3000"]

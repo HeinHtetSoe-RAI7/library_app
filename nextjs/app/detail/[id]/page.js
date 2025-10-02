@@ -22,7 +22,7 @@ export default function BookDetailPage() {
       setLoading(true);
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        const response = await api.get(`/book/${id}`);
+        const response = await api.get(`/books/${id}`);
         setBook(response.data.book_detail);
       } catch (err) {
         setError("Failed to fetch book");

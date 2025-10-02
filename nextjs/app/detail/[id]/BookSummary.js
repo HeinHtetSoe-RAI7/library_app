@@ -1,5 +1,6 @@
 // detail/[id]/BookSummary.js
-import { Button, Typography, Divider, Collapse } from "@mui/material";
+import { IconButton, Typography, Divider, Collapse } from "@mui/material";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 
 export default function BookSummary({ book, summary, onEditClicked }) {
   return (
@@ -20,7 +21,9 @@ export default function BookSummary({ book, summary, onEditClicked }) {
       //         ဇလွန်ဈေးဘေးဗာဒံပင်ထက်အဓိဋ္ဌာန်လျက်ဂဃနဏဖတ်ခဲ့သည်။ */}
         </Typography>
       </Collapse>
-      <Button onClick={onEditClicked}>Edit</Button>
+      <IconButton aria-label="edit-notes">
+        <EditNoteIcon onClick={onEditClicked} />
+      </IconButton>
     </>
   );
 }

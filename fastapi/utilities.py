@@ -60,7 +60,7 @@ async def scan_books(folder: str) -> dict:
             )
         else:
             file_name = safe_str(data_item.get("File"))
-            book_link = f"/books/{file_name}"
+            book_link = f"/books_static/{file_name}"
             if not await book_exists(book_link):
                 books_to_add.append(
                     {
@@ -69,7 +69,7 @@ async def scan_books(folder: str) -> dict:
                         "year": data_item.get("Year", 0),
                         "pages": data_item.get("Pages", 0),
                         "book_link": book_link,
-                        "image_path": f"/images/{Path(file_name).stem}.jpg",
+                        "image_path": f"/images_static/{Path(file_name).stem}.jpg",
                     }
                 )
             else:

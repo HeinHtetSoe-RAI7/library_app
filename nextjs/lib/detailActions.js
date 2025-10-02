@@ -7,10 +7,10 @@ export async function toggleFavourite(bookId, isFavourite) {
   if (!bookId) throw new Error("Book ID is required");
 
   if (!isFavourite) {
-    await api.post("/add_favourite", { book_id: bookId });
+    await api.post("/favourites", { book_id: bookId });
     return true;
   } else {
-    await api.delete(`/remove_favourite/${bookId}`);
+    await api.delete(`/favourites/${bookId}`);
     return false;
   }
 }
@@ -30,7 +30,7 @@ export async function updateBook(book, formData) {
     image_path: formData.image_path,
   };
 
-  const res = await api.post("/update", payload, {
+  const res = await api.post("/books/update", payload, {
     headers: { "Content-Type": "application/json" },
   });
 
@@ -63,7 +63,7 @@ export async function upsertNote(bookId, note) {
  */
 export async function addToRecent(bookId) {
   try {
-    await api.post("/add_recent", { book_id: bookId });
+    await api.post("/recents", { book_id: bookId });
   } catch (err) {
     console.error("Failed to add to recent", err);
     throw err;

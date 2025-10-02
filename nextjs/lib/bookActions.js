@@ -1,7 +1,9 @@
 import api from "./axios";
 
 export const scanBooks = async (folder) => {
-  const url = folder ? `/scan?folder=${encodeURIComponent(folder)}` : "/scan";
+  const url = folder
+    ? `/scan?folder=${encodeURIComponent(folder)}`
+    : "/books/scan";
   const response = await api.get(url);
   return response.data.message;
 };
@@ -12,7 +14,7 @@ export const clearAllRecents = async () => {
   );
   if (!confirmed) return null;
 
-  const response = await api.delete("/clear_all");
+  const response = await api.delete("/recents");
   return response.data.message;
 };
 
@@ -22,7 +24,7 @@ export const clearFavourites = async () => {
   );
   if (!confirmed) return null;
 
-  const response = await api.delete("/remove_all_favourites");
+  const response = await api.delete("/favourites");
   return response.data.message;
 };
 
