@@ -66,6 +66,6 @@ logs/
 *.swp
 
 # Next.js configuration files
-eslint.config.mjs
-jsconfig.json
-next.config.mjs
+# eslint.config.mjs
+# jsconfig.json
+# next.config.mjs

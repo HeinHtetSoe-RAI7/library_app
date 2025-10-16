@@ -32,7 +32,7 @@ EXPOSE 3000
 RUN npx next telemetry disable
 
 # Command for development
-CMD ["npm", "run", "dev"]
+# CMD ["npm", "run", "dev"]
 
 # Optional: use for production
-# CMD ["npm", "run", "start", "--", "-H", "0.0.0.0", "-p", "3000"]
+CMD ["npm", "run", "start", "--", "-H", "0.0.0.0", "-p", "3000"]

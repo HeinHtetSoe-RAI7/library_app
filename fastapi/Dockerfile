@@ -17,5 +17,5 @@ COPY . .
 EXPOSE 8888
 
 # Command to run the FastAPI application with Uvicorn
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8888", "--log-level", "info", "--reload"]
-# CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8888", "--log-level", "info", "--workers", "2"]
+# CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8888", "--log-level", "info", "--reload"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8888", "--log-level", "info", "--workers", "2"]
